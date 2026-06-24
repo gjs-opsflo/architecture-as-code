@@ -558,6 +558,46 @@
 
 	const calmJson = $derived(getModelJson());
 
+	// ─── Session persistence — restore last-loaded architecture on reload ────
+	//
+	// On every page load (browser refresh, dev-server HMR, etc.) the in-memory
+	// CALM model resets to { nodes: [], relationships: [] } and the user has
+	// to re-open their file. Persist the current model JSON to localStorage on
+	// every change, and rehydrate it on mount. importCalmFile is reused so the
+	// auto-layout + projection + decorator passes all run identically to a
+	// fresh file open.
+	const CALM_JSON_STORAGE_KEY = 'calmstudio:lastArchitecture';
+
+	$effect(() => {
+		// `calmJson` is reactive — every model mutation triggers this effect.
+		// Skip persisting the empty-model placeholder so a reset-then-reload
+		// doesn't clobber the previously saved architecture before the user
+		// has loaded anything.
+		const json = calmJson;
+		const model = getModel();
+		if (model.nodes.length === 0 && model.relationships.length === 0) return;
+		try {
+			globalThis.localStorage?.setItem(CALM_JSON_STORAGE_KEY, json);
+		} catch {
+			/* storage unavailable — silently skip */
+		}
+	});
+
+	onMount(() => {
+		// Rehydrate only if we currently have an empty model — avoids fighting
+		// a Tauri cold-start that loads from a file path before we get here.
+		const cur = getModel();
+		if (cur.nodes.length > 0 || cur.relationships.length > 0) return;
+		let stored: string | null = null;
+		try {
+			stored = globalThis.localStorage?.getItem(CALM_JSON_STORAGE_KEY) ?? null;
+		} catch {
+			return;
+		}
+		if (!stored) return;
+		void importCalmFile(stored, 'restored from session');
+	});
+
 	// ─── Selection state ─────────────────────────────────────────────────────
 
 	let selectedNodeId = $state<string | null>(null);

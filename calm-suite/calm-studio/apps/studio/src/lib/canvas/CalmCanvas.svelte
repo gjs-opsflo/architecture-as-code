@@ -182,22 +182,33 @@
 	export function navigateToNode(calmId: string) {
 		const node = nodes.find((n) => (n.data?.calmId as string) === calmId || n.id === calmId);
 		if (!node) return;
-		// Walk parent chain so position becomes absolute.
-		let absX = node.position.x;
-		let absY = node.position.y;
-		let cursor: Node | undefined = node;
-		while (cursor?.parentId) {
-			const parent = nodes.find((n) => n.id === cursor!.parentId);
-			if (!parent) break;
-			absX += parent.position.x;
-			absY += parent.position.y;
-			cursor = parent;
-		}
-		absX += (node.measured?.width ?? 120) / 2;
-		absY += (node.measured?.height ?? 60) / 2;
-		setCenter(absX, absY, { zoom: 1.2, duration: 400 });
-		// Select the node
+		// Mark the target as selected up front so the surrounding UI (properties
+		// panel etc.) reacts even if fitView's animation is still in flight.
 		nodes = nodes.map((n) => ({ ...n, selected: n.id === node.id }));
+		// Use fitView with a single-node filter rather than setCenter. fitView
+		// reads each node's absolute bounds from Svelte Flow's internal store —
+		// so nested nodes are handled correctly without us hand-walking the
+		// parent chain, and missing `measured` dimensions on a freshly mounted
+		// canvas no longer cause us to centre on (0, 0). The previous
+		// setCenter path worked intermittently because it depended on the
+		// node being measured by the time we called it; fitView waits.
+		try {
+			fitView({
+				nodes: [{ id: node.id }],
+				duration: 400,
+				// Lift maxZoom so the target node visibly fills a meaningful
+				// portion of the viewport instead of sitting at 1.2× — users
+				// were having to manually zoom in after every navigateToNode
+				// call. minZoom keeps small-node containers from zooming past
+				// 1× and looking pixelated.
+				maxZoom: 1.8,
+				minZoom: 1,
+				padding: 0.6,
+			});
+		} catch {
+			/* useSvelteFlow not ready — bail; the next navigation attempt
+			   will retry once the provider has settled. */
+		}
 	}
 
 	// ─── Search state ─────────────────────────────────────────────────────────
@@ -587,7 +598,12 @@
 		onnodedblclick={(e) => {
 			if (readonly && ondblclicknode) {
 				ondblclicknode(e.node);
+				return;
 			}
+			// In Edit mode (non-readonly, non-C4) a double-click zooms in on the
+			// node. Reuses the same fitView path as navigateToNode so the zoom
+			// level + animation match the "Open in editor" affordance.
+			navigateToNode(e.node.id);
 		}}
 	>
 		<Background variant={BackgroundVariant.Dots} gap={20} size={1} />
