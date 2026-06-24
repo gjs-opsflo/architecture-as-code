@@ -8,7 +8,7 @@
   conveyed by the popover on click rather than per-variant arrow styling.
 -->
 <script lang="ts">
-	import { BaseEdge, getBezierPath, type EdgeProps } from '@xyflow/svelte';
+	import { BaseEdge, getSmoothStepPath, type EdgeProps } from '@xyflow/svelte';
 
 	let {
 		id,
@@ -18,20 +18,35 @@
 		targetY,
 		sourcePosition,
 		targetPosition,
-		markerEnd
+		markerEnd,
+		data
 	}: EdgeProps = $props();
 
+	// Orthogonal (right-angle) routing avoids edges passing through unrelated nodes.
+	// borderRadius rounds the corners — purely visual, matches CalmHub.
 	const [edgePath, labelX, labelY] = $derived(
-		getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
+		getSmoothStepPath({
+			sourceX,
+			sourceY,
+			sourcePosition,
+			targetX,
+			targetY,
+			targetPosition,
+			borderRadius: 6
+		})
 	);
+
+	const dimmed = $derived((data as Record<string, unknown> | undefined)?.dimmed === true);
 </script>
 
-<BaseEdge
-	{id}
-	path={edgePath}
-	{markerEnd}
-	style="stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 4 3; fill: none;"
-/>
-
-<!-- Midpoint circle (CalmHub pattern, image 3). Tiny white-filled, light stroke. -->
-<circle cx={labelX} cy={labelY} r="3.5" fill="var(--color-surface, #ffffff)" stroke="#94a3b8" stroke-width="1" />
+<g style={dimmed ? 'opacity: 0.12' : ''}>
+	<BaseEdge
+		{id}
+		path={edgePath}
+		{markerEnd}
+		style="stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 4 3; fill: none;"
+	/>
+	{#if !dimmed}
+		<circle cx={labelX} cy={labelY} r="3.5" fill="var(--color-surface, #ffffff)" stroke="#94a3b8" stroke-width="1" />
+	{/if}
+</g>

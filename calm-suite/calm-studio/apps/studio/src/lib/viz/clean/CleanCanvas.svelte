@@ -33,8 +33,6 @@
 	}: {
 		nodes?: Node[];
 		edges?: Edge[];
-		/** Initial viewport; user changes are reported via onviewportchange so the
-		 * parent can persist across mode switches without an unmount/remount loop. */
 		viewport?: Viewport;
 		onviewportchange?: (vp: Viewport) => void;
 		onselectionchange?: (nodeId: string | null, edgeId: string | null) => void;
@@ -46,7 +44,35 @@
 		onviewportchange?.(internalViewport);
 	});
 
+	/**
+	 * Track the currently selected node so we can dim cross-container edges
+	 * that don't involve it. Reduces edge-spaghetti density per user feedback.
+	 */
+	let selectedNodeId = $state<string | null>(null);
+
+	/**
+	 * Dim edges that cross container boundaries AND don't involve the selected
+	 * node. Same-container edges always stay visible. Click a node → all its
+	 * edges pop back into view; click empty canvas → only same-container edges
+	 * are bright. CleanEdge reads `data.dimmed` to fade.
+	 */
+	const visibleEdges = $derived.by(() => {
+		const parentMap = new Map<string, string | undefined>();
+		for (const n of nodes) parentMap.set(n.id, n.parentId);
+		return edges.map((e) => {
+			const sameContainer = parentMap.get(e.source) === parentMap.get(e.target);
+			const touchesSelection =
+				selectedNodeId !== null && (e.source === selectedNodeId || e.target === selectedNodeId);
+			const dimmed = !sameContainer && !touchesSelection;
+			return {
+				...e,
+				data: { ...(e.data ?? {}), dimmed }
+			};
+		});
+	});
+
 	function handleSelectionChange(event: { nodes: Node[]; edges: Edge[] }) {
+		selectedNodeId = event.nodes[0]?.id ?? null;
 		onselectionchange?.(event.nodes[0]?.id ?? null, event.edges[0]?.id ?? null);
 	}
 </script>
@@ -54,7 +80,7 @@
 <div class="clean-canvas">
 	<SvelteFlow
 		bind:nodes
-		bind:edges
+		edges={visibleEdges}
 		bind:viewport={internalViewport}
 		nodeTypes={cleanNodeTypes}
 		edgeTypes={cleanEdgeTypes}
