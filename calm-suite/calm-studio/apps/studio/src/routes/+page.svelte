@@ -19,6 +19,7 @@
 	import DnDProvider from '$lib/palette/DnDProvider.svelte';
 	import NodePalette from '$lib/palette/NodePalette.svelte';
 	import CalmCanvas from '$lib/canvas/CalmCanvas.svelte';
+	import CleanCanvas from '$lib/viz/clean/CleanCanvas.svelte';
 	import CodePanel from '$lib/editor/CodePanel.svelte';
 	import PropertiesPanel from '$lib/properties/PropertiesPanel.svelte';
 	import Toolbar from '$lib/toolbar/Toolbar.svelte';
@@ -1317,8 +1318,15 @@
 										ondblclicknode={handleC4DrillDown}
 										onselectionchange={handleSelectionChange}
 									/>
+								{:else if viewMode.mode === 'view'}
+									<!-- View mode (greenfield CalmHub-clone canvas) -->
+									<CleanCanvas
+										bind:nodes
+										bind:edges
+										onselectionchange={handleSelectionChange}
+									/>
 								{:else}
-									<!-- Normal mode: bind nodes/edges for two-way sync -->
+									<!-- Edit mode: Studio canvas with editing affordances -->
 									<CalmCanvas
 										bind:this={canvas}
 										bind:nodes
