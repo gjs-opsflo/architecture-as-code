@@ -104,7 +104,7 @@
 
 <style>
 	.inline-popover {
-		position: absolute;
+		position: fixed; /* viewport-anchored, ignores ancestor offsets */
 		width: 320px;
 		max-height: 70vh;
 		background: var(--color-surface, #ffffff);
@@ -113,7 +113,7 @@
 		box-shadow:
 			0 16px 32px rgb(10 10 9 / 0.08),
 			0 4px 12px rgb(10 10 9 / 0.06);
-		z-index: 12;
+		z-index: 1000;
 		display: flex;
 		flex-direction: column;
 		font-family: var(--font-sans, 'Geist', sans-serif);

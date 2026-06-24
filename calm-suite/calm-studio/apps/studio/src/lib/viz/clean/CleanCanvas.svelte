@@ -17,6 +17,7 @@
 		Background,
 		BackgroundVariant,
 		MiniMap,
+		PanOnScrollMode,
 		type Node,
 		type Edge,
 		type Viewport
@@ -27,22 +28,20 @@
 	let {
 		nodes = $bindable<Node[]>([]),
 		edges = $bindable<Edge[]>([]),
-		viewport = { x: 0, y: 0, zoom: 1 } as Viewport,
 		onviewportchange,
 		onselectionchange
 	}: {
 		nodes?: Node[];
 		edges?: Edge[];
-		viewport?: Viewport;
 		onviewportchange?: (vp: Viewport) => void;
 		onselectionchange?: (nodeId: string | null, edgeId: string | null) => void;
 	} = $props();
 
-	let internalViewport = $state<Viewport>(viewport);
-
-	$effect(() => {
-		onviewportchange?.(internalViewport);
-	});
+	// Viewport bound directly to Svelte Flow. Emit changes upward via callback;
+	// parent owns persistence but does NOT push a viewport back down (avoids the
+	// remount/feedback loop that was breaking trackpad gestures).
+	let viewport = $state<Viewport>({ x: 0, y: 0, zoom: 1 });
+	$effect(() => onviewportchange?.(viewport));
 
 	/**
 	 * Track the currently selected node so we can dim cross-container edges
@@ -81,7 +80,7 @@
 	<SvelteFlow
 		bind:nodes
 		edges={visibleEdges}
-		bind:viewport={internalViewport}
+		bind:viewport
 		nodeTypes={cleanNodeTypes}
 		edgeTypes={cleanEdgeTypes}
 		minZoom={0.2}
@@ -91,7 +90,7 @@
 		elementsSelectable
 		panOnDrag
 		panOnScroll
-		zoomOnScroll={false}
+		panOnScrollMode={PanOnScrollMode.Free}
 		zoomOnPinch
 		zoomOnDoubleClick={false}
 		selectionOnDrag={false}

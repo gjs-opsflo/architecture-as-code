@@ -1356,7 +1356,6 @@
 									<CleanCanvas
 										bind:nodes
 										bind:edges
-										viewport={sharedViewport ?? { x: 0, y: 0, zoom: 1 }}
 										onviewportchange={(vp) => (sharedViewport = vp)}
 										onselectionchange={handleSelectionChange}
 									/>
