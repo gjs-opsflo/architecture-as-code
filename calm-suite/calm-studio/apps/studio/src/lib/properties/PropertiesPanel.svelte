@@ -57,19 +57,21 @@
 				: 'Properties'
 	);
 
-	/** Active tab — auto-promotes to 'detail' on node selection per UX-REDESIGN.md mode IA. */
-	let activeTab = $state<'properties' | 'governance' | 'detail'>('detail');
+	/** Active tab — defaults to 'properties' on selection (Edit mode is for editing).
+	 *  User can manually switch to Detail/Governance. Per user feedback 2026-06-24:
+	 *  "we should show properties instead as default." */
+	let activeTab = $state<'properties' | 'governance' | 'detail'>('properties');
 
 	/** Track previous selection ID to detect changes. */
 	let prevSelectionKey = $state<string | null>(null);
 
-	// Auto-promote to Detail tab on selection change (UX-REDESIGN.md Mockup 5).
-	// Edges still default to 'properties' since Detail is node-only.
+	// Reset to Properties tab on selection change so each new node starts on
+	// the form-edit view. User can switch tabs to inspect Detail / Governance.
 	$effect(() => {
 		const key = activeNode?.id ?? activeEdge?.id ?? null;
 		if (key !== prevSelectionKey) {
 			prevSelectionKey = key;
-			activeTab = activeNode ? 'detail' : 'properties';
+			activeTab = 'properties';
 		}
 	});
 

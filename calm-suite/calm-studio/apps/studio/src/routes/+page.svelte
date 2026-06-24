@@ -131,11 +131,19 @@
 		if (canvas && pendingNavigateNodeId && viewMode.mode === 'edit') {
 			const target = pendingNavigateNodeId;
 			pendingNavigateNodeId = null;
-			try {
-				canvas.navigateToNode(target);
-			} catch {
-				/* canvas not fully wired yet — drop silently */
-			}
+			// Two-frame delay so Svelte Flow finishes its initial layout pass +
+			// node measurement before we ask it to center on a node. Without this,
+			// navigateToNode runs against pre-measured nodes (measured? undefined)
+			// and Svelte Flow's setCenter computes an off-screen position.
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					try {
+						canvas?.navigateToNode(target);
+					} catch {
+						/* canvas not fully wired — silent */
+					}
+				});
+			});
 		}
 	});
 
