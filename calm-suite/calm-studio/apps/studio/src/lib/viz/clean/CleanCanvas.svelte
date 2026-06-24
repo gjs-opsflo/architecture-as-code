@@ -27,15 +27,24 @@
 	let {
 		nodes = $bindable<Node[]>([]),
 		edges = $bindable<Edge[]>([]),
-		viewport = $bindable<Viewport>({ x: 0, y: 0, zoom: 1 }),
+		viewport = { x: 0, y: 0, zoom: 1 } as Viewport,
+		onviewportchange,
 		onselectionchange
 	}: {
 		nodes?: Node[];
 		edges?: Edge[];
-		/** Shared viewport state so Edit↔View mode swaps preserve zoom/pan. */
+		/** Initial viewport; user changes are reported via onviewportchange so the
+		 * parent can persist across mode switches without an unmount/remount loop. */
 		viewport?: Viewport;
+		onviewportchange?: (vp: Viewport) => void;
 		onselectionchange?: (nodeId: string | null, edgeId: string | null) => void;
 	} = $props();
+
+	let internalViewport = $state<Viewport>(viewport);
+
+	$effect(() => {
+		onviewportchange?.(internalViewport);
+	});
 
 	function handleSelectionChange(event: { nodes: Node[]; edges: Edge[] }) {
 		onselectionchange?.(event.nodes[0]?.id ?? null, event.edges[0]?.id ?? null);
@@ -46,7 +55,7 @@
 	<SvelteFlow
 		bind:nodes
 		bind:edges
-		bind:viewport
+		bind:viewport={internalViewport}
 		nodeTypes={cleanNodeTypes}
 		edgeTypes={cleanEdgeTypes}
 		minZoom={0.2}
@@ -55,7 +64,10 @@
 		nodesConnectable={false}
 		elementsSelectable
 		panOnDrag
-		zoomOnScroll
+		panOnScroll
+		zoomOnScroll={false}
+		zoomOnPinch
+		zoomOnDoubleClick={false}
 		selectionOnDrag={false}
 		onselectionchange={handleSelectionChange}
 	>

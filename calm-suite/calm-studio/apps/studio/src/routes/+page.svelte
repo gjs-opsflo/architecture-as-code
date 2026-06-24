@@ -110,25 +110,35 @@
 	let edges = $state.raw<Edge[]>([]);
 
 	/**
-	 * Shared viewport state across Edit ⇄ View mode swaps. Without this,
-	 * switching modes remounts Svelte Flow and loses the user's zoom/pan
-	 * (reported as: "when i switch from view to edit, that zoom on that
-	 * specific part/node is gone"). Edit-mode CalmCanvas writes here via
-	 * the saveViewport effect below; CleanCanvas binds it directly.
+	 * Shared viewport state across Edit ⇄ View mode swaps. CleanCanvas
+	 * binds it directly via bind:viewport. CalmCanvas (Edit mode) keeps its
+	 * own internal viewport — we capture/restore only on actual mode
+	 * transitions (not on first mount, which would otherwise snap Edit to
+	 * the default {0,0,1} and "auto-shift to top-left").
 	 */
-	let sharedViewport = $state<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+	let sharedViewport = $state<{ x: number; y: number; zoom: number } | null>(null);
+	let prevViewMode = $state<'edit' | 'view' | null>(null);
 
 	$effect(() => {
-		viewMode.mode; // dependency — react to mode flip
+		const m = viewMode.mode;
+		if (prevViewMode === null) {
+			// First mount — record current mode, don't touch any viewport.
+			prevViewMode = m;
+			return;
+		}
+		if (m === prevViewMode) return;
 		try {
-			if (viewMode.mode === 'view' && canvas) {
+			if (prevViewMode === 'edit' && m === 'view' && canvas) {
+				// Leaving Edit → capture its viewport for the new View mount.
 				sharedViewport = canvas.saveViewport();
-			} else if (viewMode.mode === 'edit' && canvas) {
+			} else if (prevViewMode === 'view' && m === 'edit' && canvas && sharedViewport) {
+				// Returning to Edit → restore the viewport View left off at.
 				canvas.restoreViewport(sharedViewport);
 			}
 		} catch {
-			/* canvas not ready yet — ignore */
+			/* canvas not ready — silent */
 		}
+		prevViewMode = m;
 	});
 
 	let canvas: CalmCanvas;
@@ -1346,7 +1356,8 @@
 									<CleanCanvas
 										bind:nodes
 										bind:edges
-										bind:viewport={sharedViewport}
+										viewport={sharedViewport ?? { x: 0, y: 0, zoom: 1 }}
+										onviewportchange={(vp) => (sharedViewport = vp)}
 										onselectionchange={handleSelectionChange}
 									/>
 								{:else}
