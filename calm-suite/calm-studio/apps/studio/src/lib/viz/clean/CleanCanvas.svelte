@@ -83,8 +83,8 @@
 		bind:viewport
 		nodeTypes={cleanNodeTypes}
 		edgeTypes={cleanEdgeTypes}
-		minZoom={0.2}
-		maxZoom={3}
+		minZoom={0.4}
+		maxZoom={2.5}
 		nodesDraggable={false}
 		nodesConnectable={false}
 		elementsSelectable

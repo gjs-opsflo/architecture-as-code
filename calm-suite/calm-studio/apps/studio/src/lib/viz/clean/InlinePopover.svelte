@@ -37,12 +37,36 @@
 
 	const { flowToScreenPosition } = useSvelteFlow();
 
-	const anchor = $derived.by(() => {
+	/**
+	 * Anchor + smart placement. Computes screen position of the selected node's
+	 * bottom-center, then chooses below-node OR above-node based on viewport room.
+	 * Clamps left/right to keep the 320px popover fully on-screen. Avoids the
+	 * "popover floats outside canvas" bug seen when pinch-zooming with selection.
+	 */
+	const placement = $derived.by(() => {
 		if (!selectedFlowNode) return null;
-		const x = selectedFlowNode.position.x + (selectedFlowNode.measured?.width ?? 140) / 2;
-		const y = selectedFlowNode.position.y + (selectedFlowNode.measured?.height ?? 60);
+		const w = selectedFlowNode.measured?.width ?? 140;
+		const h = selectedFlowNode.measured?.height ?? 60;
+		const cx = selectedFlowNode.position.x + w / 2;
+		const bottom = selectedFlowNode.position.y + h;
+		const top = selectedFlowNode.position.y;
 		try {
-			return flowToScreenPosition({ x, y });
+			const screenBottom = flowToScreenPosition({ x: cx, y: bottom });
+			const screenTop = flowToScreenPosition({ x: cx, y: top });
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+			const popW = 320;
+			const popMaxH = Math.min(vh * 0.7, 520);
+			const margin = 16;
+			// Vertical: below by default; flip above if no room.
+			const placeBelow = screenBottom.y + popMaxH + margin <= vh;
+			const y = placeBelow ? screenBottom.y + 14 : screenTop.y - 14 - popMaxH;
+			// Horizontal: clamp so the popover stays fully in-view.
+			let x = screenBottom.x - popW / 2;
+			x = Math.max(margin, Math.min(x, vw - popW - margin));
+			// Arrow x within popover (relative to popover left edge).
+			const arrowX = Math.max(20, Math.min(popW - 20, screenBottom.x - x));
+			return { x, y, arrowX, placeBelow };
 		} catch {
 			return null;
 		}
@@ -59,11 +83,13 @@
 	});
 </script>
 
-{#if selectedCalmNode && anchor}
+{#if selectedCalmNode && placement}
 	<aside
 		class="inline-popover"
-		style:left="{anchor.x - 160}px"
-		style:top="{anchor.y + 14}px"
+		class:placed-above={!placement.placeBelow}
+		style:left="{placement.x}px"
+		style:top="{placement.y}px"
+		style:--arrow-x="{placement.arrowX}px"
 		role="dialog"
 		aria-label="Node details: {selectedCalmNode.name ?? selectedCalmNode['unique-id']}"
 	>
@@ -123,7 +149,8 @@
 		content: '';
 		position: absolute;
 		top: -7px;
-		left: 152px;
+		left: var(--arrow-x, 152px);
+		margin-left: -6px;
 		width: 12px;
 		height: 12px;
 		background: var(--color-surface, #ffffff);
@@ -131,6 +158,11 @@
 		border-right: 0;
 		border-bottom: 0;
 		transform: rotate(45deg);
+	}
+	.inline-popover.placed-above::before {
+		top: auto;
+		bottom: -7px;
+		transform: rotate(225deg);
 	}
 	.ip-head {
 		display: flex;
