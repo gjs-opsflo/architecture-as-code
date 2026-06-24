@@ -83,20 +83,22 @@
 	}
 	.primary-badge {
 		position: absolute;
-		top: 4px;
-		right: 6px;
+		top: -6px;
+		right: -6px;
 		z-index: 2;
 		display: inline-flex;
 		align-items: center;
 		gap: 3px;
-		padding: 2px 5px;
+		padding: 2px 6px;
 		border-radius: 8px;
-		font: 500 9px/1 'Geist Mono', ui-monospace, monospace;
-		color: var(--node-badge-fg, rgb(99 102 241));
-		background: var(--node-badge-bg, rgba(238, 242, 255, 0.9));
-		border: 1px solid var(--node-badge-border, rgba(99, 102, 241, 0.18));
+		font: 500 9px/1 var(--font-mono, 'Geist Mono', ui-monospace, monospace);
+		color: var(--node-badge-fg, var(--color-accent, #4f46e5));
+		background: var(--node-badge-bg, var(--color-accent-subtle, #eef2ff));
+		border: 1px solid var(--node-badge-border, rgba(79, 70, 229, 0.18));
+		box-shadow: 0 1px 2px rgb(10 10 9 / 0.04);
 	}
 	.primary-badge .badge-text {
 		font-weight: 500;
+		letter-spacing: -0.005em;
 	}
 </style>
