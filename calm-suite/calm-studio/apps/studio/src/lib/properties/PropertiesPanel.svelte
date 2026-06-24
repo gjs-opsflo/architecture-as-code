@@ -17,7 +17,12 @@
 	import NodeProperties from './NodeProperties.svelte';
 	import EdgeProperties from './EdgeProperties.svelte';
 	import GovernancePanel from '$lib/governance/GovernancePanel.svelte';
-	import { isAINode } from '@calmstudio/calm-core';
+	import ControlsSection from '$lib/viz/drawer/sections/ControlsSection.svelte';
+	import ThreatsSection from '$lib/viz/drawer/sections/ThreatsSection.svelte';
+	import DecoratorsSection from '$lib/viz/drawer/sections/DecoratorsSection.svelte';
+	import ComposedOfSection from '$lib/viz/drawer/sections/ComposedOfSection.svelte';
+	import { getModel } from '$lib/stores/calmModel.svelte';
+	import { isAINode, type CalmNode as CalmNodeT } from '@calmstudio/calm-core';
 
 	let {
 		selectedNode = null,
@@ -52,19 +57,28 @@
 				: 'Properties'
 	);
 
-	/** Active tab — reset to 'properties' whenever selection changes. */
-	let activeTab = $state<'properties' | 'governance'>('properties');
+	/** Active tab — auto-promotes to 'detail' on node selection per UX-REDESIGN.md mode IA. */
+	let activeTab = $state<'properties' | 'governance' | 'detail'>('detail');
 
 	/** Track previous selection ID to detect changes. */
 	let prevSelectionKey = $state<string | null>(null);
 
-	// Reset tab to 'properties' on selection change (per locked decision: no auto-switch)
+	// Auto-promote to Detail tab on selection change (UX-REDESIGN.md Mockup 5).
+	// Edges still default to 'properties' since Detail is node-only.
 	$effect(() => {
 		const key = activeNode?.id ?? activeEdge?.id ?? null;
 		if (key !== prevSelectionKey) {
 			prevSelectionKey = key;
-			activeTab = 'properties';
+			activeTab = activeNode ? 'detail' : 'properties';
 		}
+	});
+
+	/** Resolve selected node against the canonical model so Detail can read decorators/controls. */
+	const selectedCalmNode = $derived.by<CalmNodeT | null>(() => {
+		if (!activeNode) return null;
+		const calmId = (activeNode.data?.calmId as string | undefined) ?? activeNode.id;
+		const model = getModel();
+		return (model.nodes?.find((n) => n['unique-id'] === calmId) as CalmNodeT | undefined) ?? null;
 	});
 
 	/** Show Governance badge dot when an AI node is selected. */
@@ -107,6 +121,17 @@
 						<span class="tab-badge" aria-label="Governance info available" title="AIGF governance info available for this node"></span>
 					{/if}
 				</button>
+				<button
+					type="button"
+					class="tab-btn"
+					class:active={activeTab === 'detail'}
+					role="tab"
+					aria-selected={activeTab === 'detail'}
+					aria-controls="tab-content-detail"
+					onclick={() => (activeTab = 'detail')}
+				>
+					Detail
+				</button>
 			</div>
 		{/if}
 
@@ -139,6 +164,19 @@
 					onBeforeFirstEdit={readonly ? undefined : onBeforeFirstEdit}
 					onmutate={readonly ? undefined : onmutate}
 				/>
+			{:else if activeTab === 'detail' && selectedCalmNode}
+				<div class="detail-tab-body">
+					{#if selectedCalmNode.description}
+						<section class="detail-desc-sec">
+							<h3 class="detail-desc-h">Description</h3>
+							<p class="detail-desc">{selectedCalmNode.description}</p>
+						</section>
+					{/if}
+					<ControlsSection node={selectedCalmNode} />
+					<ThreatsSection node={selectedCalmNode} />
+					<DecoratorsSection node={selectedCalmNode} />
+					<ComposedOfSection node={selectedCalmNode} arch={getModel()} />
+				</div>
 			{/if}
 		</div>
 	{:else}
@@ -263,6 +301,27 @@
 	.panel-content.readonly {
 		pointer-events: none;
 		opacity: 0.7;
+	}
+
+	/* ─── Detail tab body ─────────────────────────────────────── */
+
+	.detail-tab-body {
+		padding: 14px 14px 24px;
+	}
+	.detail-desc-sec {
+		margin-bottom: 14px;
+	}
+	.detail-desc-h {
+		font: 600 9px/1 var(--font-mono, ui-monospace, monospace);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-text-tertiary, #a8a29e);
+		margin: 0 0 6px;
+	}
+	.detail-desc {
+		font: 400 12px/1.5 var(--font-sans, sans-serif);
+		color: var(--color-text-secondary, #57534e);
+		margin: 0;
 	}
 
 	/* ─── Collapsed state ────────────────────────────────────────── */
