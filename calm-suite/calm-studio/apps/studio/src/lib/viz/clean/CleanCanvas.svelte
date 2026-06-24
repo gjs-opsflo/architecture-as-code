@@ -12,17 +12,28 @@
   to position an InlinePopover near the clicked node.
 -->
 <script lang="ts">
-	import { SvelteFlow, Background, BackgroundVariant, MiniMap, type Node, type Edge } from '@xyflow/svelte';
+	import {
+		SvelteFlow,
+		Background,
+		BackgroundVariant,
+		MiniMap,
+		type Node,
+		type Edge,
+		type Viewport
+	} from '@xyflow/svelte';
 	import { cleanNodeTypes, cleanEdgeTypes } from './cleanTypes';
 	import '@xyflow/svelte/dist/style.css';
 
 	let {
 		nodes = $bindable<Node[]>([]),
 		edges = $bindable<Edge[]>([]),
+		viewport = $bindable<Viewport>({ x: 0, y: 0, zoom: 1 }),
 		onselectionchange
 	}: {
 		nodes?: Node[];
 		edges?: Edge[];
+		/** Shared viewport state so Edit↔View mode swaps preserve zoom/pan. */
+		viewport?: Viewport;
 		onselectionchange?: (nodeId: string | null, edgeId: string | null) => void;
 	} = $props();
 
@@ -35,9 +46,9 @@
 	<SvelteFlow
 		bind:nodes
 		bind:edges
+		bind:viewport
 		nodeTypes={cleanNodeTypes}
 		edgeTypes={cleanEdgeTypes}
-		fitView
 		minZoom={0.2}
 		maxZoom={3}
 		nodesDraggable={false}

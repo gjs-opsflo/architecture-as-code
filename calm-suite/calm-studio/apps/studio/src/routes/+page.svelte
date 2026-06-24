@@ -109,6 +109,28 @@
 	let nodes = $state.raw<Node[]>([]);
 	let edges = $state.raw<Edge[]>([]);
 
+	/**
+	 * Shared viewport state across Edit ⇄ View mode swaps. Without this,
+	 * switching modes remounts Svelte Flow and loses the user's zoom/pan
+	 * (reported as: "when i switch from view to edit, that zoom on that
+	 * specific part/node is gone"). Edit-mode CalmCanvas writes here via
+	 * the saveViewport effect below; CleanCanvas binds it directly.
+	 */
+	let sharedViewport = $state<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+
+	$effect(() => {
+		viewMode.mode; // dependency — react to mode flip
+		try {
+			if (viewMode.mode === 'view' && canvas) {
+				sharedViewport = canvas.saveViewport();
+			} else if (viewMode.mode === 'edit' && canvas) {
+				canvas.restoreViewport(sharedViewport);
+			}
+		} catch {
+			/* canvas not ready yet — ignore */
+		}
+	});
+
 	let canvas: CalmCanvas;
 
 	// ─── viz: mode + overlay state + threat extraction ───────────────────────
@@ -1324,6 +1346,7 @@
 									<CleanCanvas
 										bind:nodes
 										bind:edges
+										bind:viewport={sharedViewport}
 										onselectionchange={handleSelectionChange}
 									/>
 								{:else}
