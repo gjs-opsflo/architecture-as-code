@@ -1357,7 +1357,9 @@
 										bind:nodes
 										bind:edges
 										onviewportchange={(vp) => (sharedViewport = vp)}
-										onselectionchange={handleSelectionChange}
+										onselectionchange={async (nodeId, edgeId) => {
+											handleSelectionChange(nodeId, edgeId);
+										}}
 									/>
 								{:else}
 									<!-- Edit mode: Studio canvas with editing affordances -->
@@ -1386,7 +1388,20 @@
 											{selectedCalmNode}
 											arch={getModel()}
 											onclose={() => (selectedNodeId = null)}
-											onopeneditor={() => viewMode.setMode('edit')}
+											onopeneditor={async () => {
+												const calmId =
+													(selectedCalmNode?.['unique-id'] as string | undefined) ?? selectedNodeId;
+												viewMode.setMode('edit');
+												await tick();
+												await tick();
+												if (calmId) {
+													try {
+														canvas?.navigateToNode(calmId);
+													} catch {
+														/* canvas not ready yet */
+													}
+												}
+											}}
 										/>
 									{:else if overlay.mode === 'threat' && threatBadges.length > 0}
 										<ThreatPanel threats={threatBadges} />
