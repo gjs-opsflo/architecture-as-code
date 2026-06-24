@@ -1352,6 +1352,26 @@
 									</button>
 								</div>
 
+								<!-- Code panel toggle (Edit mode only — code panel is the
+								     bottom JSON editor, hidden by default to reclaim vertical
+								     space. Also reachable via Cmd/Ctrl + '.) -->
+								{#if viewMode.mode === 'edit'}
+									<button
+										type="button"
+										onclick={() => (showCodePanel = !showCodePanel)}
+										class="canvas-toolbar-btn"
+										class:active={showCodePanel}
+										aria-label={showCodePanel ? 'Hide JSON code panel' : 'Show JSON code panel'}
+										aria-pressed={showCodePanel}
+										title={showCodePanel ? 'Hide JSON (Cmd+′)' : 'Show JSON (Cmd+′)'}
+									>
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+											<polyline points="16 18 22 12 16 6" />
+											<polyline points="8 6 2 12 8 18" />
+										</svg>
+									</button>
+								{/if}
+
 								<!-- Dark mode toggle -->
 								<button
 									onclick={toggleTheme}
@@ -1821,6 +1841,19 @@
 	:global(.dark) .canvas-toolbar-btn:hover {
 		background: #1e293b;
 		color: #e2e8f0;
+	}
+
+	/* Active toggle state — used by the code-panel button when the JSON
+	   editor is currently visible, so the toolbar reflects current state. */
+	.canvas-toolbar-btn.active {
+		background: var(--color-accent-subtle, #eef2ff);
+		border-color: var(--color-accent, #4f46e5);
+		color: var(--color-accent, #4f46e5);
+	}
+	:global(.dark) .canvas-toolbar-btn.active {
+		background: #1e1b4b;
+		border-color: #4f46e5;
+		color: #c7d2fe;
 	}
 
 	/* PaneResizer styling — thin draggable bars */
