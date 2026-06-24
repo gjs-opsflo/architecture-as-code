@@ -583,19 +583,78 @@
 		}
 	});
 
+	const CALM_VIEWPORT_STORAGE_KEY = 'calmstudio:lastViewport';
+
+	function readStoredViewport(): { x: number; y: number; zoom: number } | null {
+		try {
+			const raw = globalThis.localStorage?.getItem(CALM_VIEWPORT_STORAGE_KEY);
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (
+				typeof parsed?.x === 'number' &&
+				typeof parsed?.y === 'number' &&
+				typeof parsed?.zoom === 'number'
+			) {
+				return parsed;
+			}
+		} catch {
+			/* ignore */
+		}
+		return null;
+	}
+
+	function persistCurrentViewport(): void {
+		try {
+			const vp = canvas?.saveViewport?.() ?? sharedViewport;
+			if (!vp) return;
+			globalThis.localStorage?.setItem(CALM_VIEWPORT_STORAGE_KEY, JSON.stringify(vp));
+		} catch {
+			/* storage unavailable */
+		}
+	}
+
 	onMount(() => {
 		// Rehydrate only if we currently have an empty model — avoids fighting
 		// a Tauri cold-start that loads from a file path before we get here.
 		const cur = getModel();
-		if (cur.nodes.length > 0 || cur.relationships.length > 0) return;
+		const shouldRehydrate = !(cur.nodes.length > 0 || cur.relationships.length > 0);
 		let stored: string | null = null;
 		try {
 			stored = globalThis.localStorage?.getItem(CALM_JSON_STORAGE_KEY) ?? null;
 		} catch {
-			return;
+			stored = null;
 		}
-		if (!stored) return;
-		void importCalmFile(stored, 'restored from session');
+		const savedVp = readStoredViewport();
+		(async () => {
+			if (shouldRehydrate && stored) {
+				await importCalmFile(stored, 'restored from session');
+			}
+			if (savedVp) {
+				// Wait for the canvas to mount + fitViewport (called inside
+				// importCalmFile) to settle, then override with the user's
+				// last viewport so a refresh feels seamless. Two RAFs match
+				// the pattern used by the pendingNavigateNodeId effect.
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						try {
+							canvas?.restoreViewport?.(savedVp);
+						} catch {
+							/* canvas not ready */
+						}
+					});
+				});
+			}
+		})();
+
+		// Persist viewport periodically (cheap — single localStorage write)
+		// and once more on tab close so an exit between intervals isn't lost.
+		const intervalId = window.setInterval(persistCurrentViewport, 2000);
+		const onUnload = (): void => persistCurrentViewport();
+		window.addEventListener('beforeunload', onUnload);
+		return () => {
+			window.clearInterval(intervalId);
+			window.removeEventListener('beforeunload', onUnload);
+		};
 	});
 
 	// ─── Selection state ─────────────────────────────────────────────────────

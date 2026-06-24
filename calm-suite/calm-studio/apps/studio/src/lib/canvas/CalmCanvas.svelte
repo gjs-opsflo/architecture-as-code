@@ -595,7 +595,15 @@
 		onnodedragstop={handleNodeDragStop}
 		onedgecontextmenu={handleEdgeContextMenu}
 		onselectionchange={handleSelectionChange}
-		onnodedblclick={(e) => {
+		onnodeclick={(e) => {
+			// @xyflow/svelte does not expose an `onnodedblclick` prop in this
+			// version — only `onnodeclick`. Detect double-click via the native
+			// MouseEvent.detail counter (1 = single, 2 = dblclick). Single
+			// click selects (handled by Svelte Flow's own selection plumbing);
+			// double-click runs our zoom/drill behaviour.
+			const evt = e.event as MouseEvent | TouchEvent;
+			const detail = (evt as MouseEvent).detail ?? 1;
+			if (detail < 2) return;
 			if (readonly && ondblclicknode) {
 				ondblclicknode(e.node);
 				return;
