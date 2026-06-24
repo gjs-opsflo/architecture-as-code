@@ -179,9 +179,29 @@
 
 	/**
 	 * Code panel collapsed by default — was eating 30% of vertical screen on every
-	 * load. Toggle via Cmd+' shortcut (handler wired below). Persists per-session.
+	 * load. Toggle via Cmd+' shortcut or the toolbar button. State is persisted to
+	 * localStorage so a user who pinned the JSON editor open keeps it open across
+	 * reloads. Read is wrapped in try/catch for SSR + restrictive-storage envs.
 	 */
-	let showCodePanel = $state(false);
+	const CODE_PANEL_STORAGE_KEY = 'calmstudio:showCodePanel';
+
+	function readCodePanelInitial(): boolean {
+		try {
+			return globalThis.localStorage?.getItem(CODE_PANEL_STORAGE_KEY) === 'true';
+		} catch {
+			return false;
+		}
+	}
+
+	let showCodePanel = $state(readCodePanelInitial());
+
+	$effect(() => {
+		try {
+			globalThis.localStorage?.setItem(CODE_PANEL_STORAGE_KEY, String(showCodePanel));
+		} catch {
+			/* storage unavailable — silently skip persistence */
+		}
+	});
 
 	$effect(() => {
 		const onKey = (e: KeyboardEvent): void => {
