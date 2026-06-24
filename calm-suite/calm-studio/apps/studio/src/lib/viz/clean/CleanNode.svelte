@@ -56,7 +56,7 @@
 >
 	<div class="row">
 		<span class="ico"><CleanIcon type={calmType} /></span>
-		<span class="lbl">{label}</span>
+		<span class="lbl" title={label}>{label}</span>
 	</div>
 	{#if calmType && calmType !== 'generic'}
 		<div class="typ">{calmType}</div>

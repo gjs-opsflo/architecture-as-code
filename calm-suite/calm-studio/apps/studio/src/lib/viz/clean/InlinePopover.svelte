@@ -58,15 +58,25 @@
 			const popW = 320;
 			const popMaxH = Math.min(vh * 0.7, 520);
 			const margin = 16;
-			// Vertical: below by default; flip above if no room.
-			const placeBelow = screenBottom.y + popMaxH + margin <= vh;
-			const y = placeBelow ? screenBottom.y + 14 : screenTop.y - 14 - popMaxH;
+			// Vertical: prefer below the node; flip above if no room there.
+			const canBelow = screenBottom.y + popMaxH + margin <= vh;
+			let placeBelow = canBelow;
+			let y = placeBelow ? screenBottom.y + 14 : screenTop.y - 14 - popMaxH;
+			// Hard clamp Y to viewport — keeps popover fully on-screen even when
+			// the selected node is a root-sized container whose top + bottom
+			// would both push the popover off-screen.
+			const yClamped = Math.max(margin, Math.min(y, vh - popMaxH - margin));
+			const yWasClamped = Math.abs(yClamped - y) > 4;
+			y = yClamped;
 			// Horizontal: clamp so the popover stays fully in-view.
 			let x = screenBottom.x - popW / 2;
 			x = Math.max(margin, Math.min(x, vw - popW - margin));
 			// Arrow x within popover (relative to popover left edge).
 			const arrowX = Math.max(20, Math.min(popW - 20, screenBottom.x - x));
-			return { x, y, arrowX, placeBelow };
+			// Hide the chevron if we had to clamp Y heavily — the arrow would
+			// no longer point at the node.
+			const showArrow = !yWasClamped;
+			return { x, y, arrowX, placeBelow, showArrow };
 		} catch {
 			return null;
 		}
@@ -87,6 +97,7 @@
 	<aside
 		class="inline-popover"
 		class:placed-above={!placement.placeBelow}
+		class:no-arrow={!placement.showArrow}
 		style:left="{placement.x}px"
 		style:top="{placement.y}px"
 		style:--arrow-x="{placement.arrowX}px"
@@ -163,6 +174,9 @@
 		top: auto;
 		bottom: -7px;
 		transform: rotate(225deg);
+	}
+	.inline-popover.no-arrow::before {
+		display: none;
 	}
 	.ip-head {
 		display: flex;

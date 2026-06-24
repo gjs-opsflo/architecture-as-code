@@ -39,7 +39,7 @@
 	const dimmed = $derived((data as Record<string, unknown> | undefined)?.dimmed === true);
 </script>
 
-<g style={dimmed ? 'opacity: 0.12' : ''}>
+<g style={dimmed ? 'opacity: 0.06' : ''}>
 	<BaseEdge
 		{id}
 		path={edgePath}
