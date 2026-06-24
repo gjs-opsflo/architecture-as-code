@@ -20,6 +20,7 @@
 	import NodePalette from '$lib/palette/NodePalette.svelte';
 	import CalmCanvas from '$lib/canvas/CalmCanvas.svelte';
 	import CleanCanvas from '$lib/viz/clean/CleanCanvas.svelte';
+	import InlinePopover from '$lib/viz/clean/InlinePopover.svelte';
 	import CodePanel from '$lib/editor/CodePanel.svelte';
 	import PropertiesPanel from '$lib/properties/PropertiesPanel.svelte';
 	import Toolbar from '$lib/toolbar/Toolbar.svelte';
@@ -1347,10 +1348,12 @@
 								-->
 								{#if viewMode.mode === 'view'}
 									{#if selectedCalmNode}
-										<DetailDrawer
+										<InlinePopover
+											selectedFlowNode={nodes.find((n) => n.id === selectedNodeId) ?? null}
+											{selectedCalmNode}
 											arch={getModel()}
-											selectedNode={selectedCalmNode}
 											onclose={() => (selectedNodeId = null)}
+											onopeneditor={() => viewMode.setMode('edit')}
 										/>
 									{:else if overlay.mode === 'threat' && threatBadges.length > 0}
 										<ThreatPanel threats={threatBadges} />
