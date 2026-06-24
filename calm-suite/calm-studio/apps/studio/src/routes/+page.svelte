@@ -119,6 +119,26 @@
 	let sharedViewport = $state<{ x: number; y: number; zoom: number } | null>(null);
 	let prevViewMode = $state<'edit' | 'view' | null>(null);
 
+	/**
+	 * When the user picks "Open in editor" from the View-mode popover, we
+	 * stash the target node here and let a $effect drive the navigation once
+	 * the CalmCanvas mounts and its bind:this canvas reference settles. The
+	 * naive tick()+tick() approach was racing the mount in some cases — this
+	 * pattern is deterministic.
+	 */
+	let pendingNavigateNodeId = $state<string | null>(null);
+	$effect(() => {
+		if (canvas && pendingNavigateNodeId && viewMode.mode === 'edit') {
+			const target = pendingNavigateNodeId;
+			pendingNavigateNodeId = null;
+			try {
+				canvas.navigateToNode(target);
+			} catch {
+				/* canvas not fully wired yet — drop silently */
+			}
+		}
+	});
+
 	$effect(() => {
 		const m = viewMode.mode;
 		if (prevViewMode === null) {
@@ -1388,19 +1408,12 @@
 											{selectedCalmNode}
 											arch={getModel()}
 											onclose={() => (selectedNodeId = null)}
-											onopeneditor={async () => {
+											onopeneditor={() => {
 												const calmId =
 													(selectedCalmNode?.['unique-id'] as string | undefined) ?? selectedNodeId;
+												if (calmId) pendingNavigateNodeId = calmId;
 												viewMode.setMode('edit');
-												await tick();
-												await tick();
-												if (calmId) {
-													try {
-														canvas?.navigateToNode(calmId);
-													} catch {
-														/* canvas not ready yet */
-													}
-												}
+												// $effect picks up canvas mount + fires navigateToNode.
 											}}
 										/>
 									{:else if overlay.mode === 'threat' && threatBadges.length > 0}
