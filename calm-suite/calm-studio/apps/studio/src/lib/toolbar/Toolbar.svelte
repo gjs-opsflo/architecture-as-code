@@ -37,6 +37,8 @@
 		flows = [],
 		activeFlowId = null,
 		onflowchange,
+		mode = 'edit',
+		onmodechange,
 	}: {
 		onopen: () => void;
 		onsave: () => void;
@@ -68,6 +70,10 @@
 		activeFlowId?: string | null;
 		/** Called when user selects a flow or "None". Receives flow ID or null. */
 		onflowchange?: (id: string | null) => void;
+		/** Current canvas mode — controls which surfaces show below the toolbar. */
+		mode?: 'edit' | 'view';
+		/** Called when user toggles between Edit and View modes. */
+		onmodechange?: (m: 'edit' | 'view') => void;
 	} = $props();
 
 	const C4_SEGMENTS = [
@@ -126,9 +132,30 @@
 <svelte:window onclick={handleClickOutside} />
 
 <header class="toolbar" role="banner">
-	<!-- Left: App name + C4 view selector + Templates button -->
+	<!-- Left: App name + mode toggle + C4 view selector + Templates button -->
 	<div class="toolbar-left">
-		<span class="app-name">CalmStudio</span>
+		<span class="app-name">CalmStudio<span class="app-dot">.</span></span>
+
+		<!-- Edit ⇄ View mode toggle -->
+		<div class="mode-toggle" role="group" aria-label="Canvas mode">
+			<button
+				type="button"
+				class="mode-btn"
+				class:active={mode === 'edit'}
+				onclick={() => onmodechange?.('edit')}
+				aria-pressed={mode === 'edit'}
+				title="Edit mode — full editor chrome"
+			>Edit</button>
+			<button
+				type="button"
+				class="mode-btn"
+				class:active={mode === 'view'}
+				onclick={() => onmodechange?.('view')}
+				aria-pressed={mode === 'view'}
+				title="View mode — read-only canvas"
+			>View</button>
+		</div>
+
 		<div class="c4-selector" role="group" aria-label="C4 view level">
 			{#each C4_SEGMENTS as seg}
 				<button
@@ -419,16 +446,55 @@
 	}
 
 	.app-name {
-		font-size: 12px;
+		font-size: 14px;
 		font-weight: 600;
 		font-family: var(--font-sans);
-		color: var(--color-text-secondary);
-		letter-spacing: 0.02em;
+		color: var(--color-text-primary);
+		letter-spacing: -0.015em;
 		user-select: none;
 	}
 
+	.app-name .app-dot {
+		color: var(--color-accent);
+	}
+
 	:global(.dark) .app-name {
-		color: #64748b;
+		color: var(--color-text-primary);
+	}
+
+	/* ─── Edit / View mode toggle ───────────────────────────── */
+
+	.mode-toggle {
+		display: inline-flex;
+		background: var(--color-surface-tertiary);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 7px;
+		padding: 2px;
+		gap: 0;
+	}
+
+	.mode-btn {
+		background: transparent;
+		border: 0;
+		padding: 4px 11px;
+		font-family: var(--font-sans);
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--color-text-secondary);
+		border-radius: 5px;
+		cursor: pointer;
+		letter-spacing: -0.005em;
+		transition: background-color 150ms ease, color 150ms ease;
+	}
+
+	.mode-btn:hover {
+		color: var(--color-text-primary);
+	}
+
+	.mode-btn.active {
+		background: var(--color-surface);
+		color: var(--color-text-primary);
+		box-shadow: 0 1px 2px rgb(10 10 9 / 0.04), 0 1px 1px rgb(10 10 9 / 0.06);
 	}
 
 	/* ─── Center: Filename + dirty dot ──────────────────────── */

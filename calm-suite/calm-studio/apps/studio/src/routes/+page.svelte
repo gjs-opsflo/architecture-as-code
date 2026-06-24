@@ -51,6 +51,7 @@
 	import OverlayToggle from '$lib/viz/overlay/OverlayToggle.svelte';
 	import ThreatPanel from '$lib/viz/overlay/ThreatPanel.svelte';
 	import { createOverlayStore } from '$lib/viz/overlay/overlayStore.svelte';
+	import { createModeStore } from '$lib/viz/mode/modeStore.svelte';
 	import DetailDrawer from '$lib/viz/drawer/DetailDrawer.svelte';
 	import type { Badge, CalmNode as CalmNodeT } from '@calmstudio/calm-core';
 	import { pushSnapshot, resetHistory, undo, redo } from '$lib/stores/history.svelte';
@@ -108,7 +109,8 @@
 
 	let canvas: CalmCanvas;
 
-	// ─── viz: overlay state + threat extraction ───────────────────────────────
+	// ─── viz: mode + overlay state + threat extraction ───────────────────────
+	const viewMode = createModeStore('edit');
 	const overlay = createOverlayStore();
 	let threatBadges = $state<Badge[]>([]);
 
@@ -1150,6 +1152,8 @@
 			flows={flows}
 			activeFlowId={activeFlowId}
 			onflowchange={setActiveFlowId}
+			mode={viewMode.mode}
+			onmodechange={(m) => viewMode.setMode(m)}
 		/>
 
 		<!-- Error banner: below toolbar, above canvas panes -->
