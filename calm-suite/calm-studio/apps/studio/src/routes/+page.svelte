@@ -1313,16 +1313,23 @@
 									/>
 								{/if}
 
-								<!-- Detail drawer (spike viz) — selection-driven, takes precedence -->
-								{#if selectedCalmNode}
-									<DetailDrawer
-										arch={getModel()}
-										selectedNode={selectedCalmNode}
-										onclose={() => (selectedNodeId = null)}
-									/>
-								{:else if overlay.mode === 'threat' && threatBadges.length > 0}
-									<!-- Threat panel (spike viz) — overlay-driven, no-selection -->
-									<ThreatPanel threats={threatBadges} />
+								<!--
+									Floating viz surfaces — gated by view mode. In Edit mode
+									the embedded Detail tab in PropertiesPanel handles node
+									selection, so the DetailDrawer is suppressed to avoid two
+									right-anchored surfaces. View mode keeps the drawer until
+									the InlinePopover replacement lands in a later commit.
+								-->
+								{#if viewMode.mode === 'view'}
+									{#if selectedCalmNode}
+										<DetailDrawer
+											arch={getModel()}
+											selectedNode={selectedCalmNode}
+											onclose={() => (selectedNodeId = null)}
+										/>
+									{:else if overlay.mode === 'threat' && threatBadges.length > 0}
+										<ThreatPanel threats={threatBadges} />
+									{/if}
 								{/if}
 
 								<!-- Empty canvas start-from-template prompt -->
