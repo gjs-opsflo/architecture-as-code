@@ -29,6 +29,7 @@
 		Background,
 		BackgroundVariant,
 		MiniMap,
+		PanOnScrollMode,
 		useSvelteFlow,
 		type Node,
 		type Edge,
@@ -170,17 +171,33 @@
 
 	/**
 	 * Center the viewport on the node or edge identified by calmId.
-	 * Called by parent (+page.svelte) in response to ValidationPanel row clicks.
+	 * Called by parent (+page.svelte) in response to ValidationPanel row clicks
+	 * and the "Open in editor" flow from the View-mode InlinePopover.
+	 *
+	 * For nodes nested in containers, `node.position` is relative to the parent
+	 * — walking the parentId chain to compute the absolute flow coordinate is
+	 * what makes setCenter actually land on the right node instead of an
+	 * unrelated area near (0, 0).
 	 */
 	export function navigateToNode(calmId: string) {
 		const node = nodes.find((n) => (n.data?.calmId as string) === calmId || n.id === calmId);
-		if (node) {
-			const x = node.position.x + (node.measured?.width ?? 120) / 2;
-			const y = node.position.y + (node.measured?.height ?? 60) / 2;
-			setCenter(x, y, { zoom: 1.2, duration: 400 });
-			// Select the node
-			nodes = nodes.map((n) => ({ ...n, selected: n.id === node.id }));
+		if (!node) return;
+		// Walk parent chain so position becomes absolute.
+		let absX = node.position.x;
+		let absY = node.position.y;
+		let cursor: Node | undefined = node;
+		while (cursor?.parentId) {
+			const parent = nodes.find((n) => n.id === cursor!.parentId);
+			if (!parent) break;
+			absX += parent.position.x;
+			absY += parent.position.y;
+			cursor = parent;
 		}
+		absX += (node.measured?.width ?? 120) / 2;
+		absY += (node.measured?.height ?? 60) / 2;
+		setCenter(absX, absY, { zoom: 1.2, duration: 400 });
+		// Select the node
+		nodes = nodes.map((n) => ({ ...n, selected: n.id === node.id }));
 	}
 
 	// ─── Search state ─────────────────────────────────────────────────────────
@@ -557,9 +574,12 @@
 		multiSelectionKey="Meta"
 		fitView
 		fitViewOptions={{ maxZoom: 1.2, padding: 0.2 }}
-		zoomOnScroll={true}
+		zoomOnScroll={false}
+		zoomOnPinch={true}
+		zoomOnDoubleClick={false}
 		panOnDrag={true}
-		panOnScroll={false}
+		panOnScroll={true}
+		panOnScrollMode={PanOnScrollMode.Free}
 		onconnect={handleConnect}
 		onnodedragstop={handleNodeDragStop}
 		onedgecontextmenu={handleEdgeContextMenu}
