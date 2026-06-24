@@ -1275,8 +1275,15 @@
 
 		<!-- Main content: three-column canvas + bottom code panel + validation drawer -->
 		<PaneGroup direction="vertical" class="main-pane-group">
-			<!-- Top: Three-column layout (palette | canvas | properties) -->
+			<!-- Top: Three-column layout (palette | canvas | properties).
+			     Wrapping the horizontal PaneGroup in {#key viewMode.mode} forces
+			     a fresh remount on every mode toggle so paneforge picks up the
+			     mode-specific defaultSize values. Without this, the inner panes
+			     keep their last-rendered widths and the canvas stays at 70%
+			     even after palette+properties are conditionally removed in View
+			     mode — leaving white 15% gutters on each side of the canvas. -->
 			<Pane defaultSize={60} minSize={30}>
+				{#key viewMode.mode}
 				<PaneGroup direction="horizontal" style="height: 100%;">
 					<!-- Left: Node Palette (hidden in C4 mode and View mode) -->
 					{#if !isC4Mode() && viewMode.mode === 'edit'}
@@ -1287,8 +1294,9 @@
 						<PaneResizer class="resizer resizer-vertical" />
 					{/if}
 
-					<!-- Center: Canvas area -->
-					<Pane defaultSize={70}>
+					<!-- Center: Canvas area — full width in View mode (no side
+					     panes to share with), 70% in Edit mode. -->
+					<Pane defaultSize={viewMode.mode === 'view' ? 100 : 70}>
 						<div
 							class="canvas-pane"
 							class:c4-context={getC4Level() === 'context'}
@@ -1463,6 +1471,7 @@
 						</Pane>
 					{/if}
 				</PaneGroup>
+				{/key}
 			</Pane>
 
 			<!-- Bottom: Code editor panel (Edit mode only, collapsed by default) -->
