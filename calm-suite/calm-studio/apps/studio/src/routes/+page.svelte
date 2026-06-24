@@ -1197,8 +1197,8 @@
 			<!-- Top: Three-column layout (palette | canvas | properties) -->
 			<Pane defaultSize={60} minSize={30}>
 				<PaneGroup direction="horizontal" style="height: 100%;">
-					<!-- Left: Node Palette (hidden in C4 mode) -->
-					{#if !isC4Mode()}
+					<!-- Left: Node Palette (hidden in C4 mode and View mode) -->
+					{#if !isC4Mode() && viewMode.mode === 'edit'}
 						<Pane defaultSize={15} minSize={8}>
 							<NodePalette onplacenode={handlePalettePlace} />
 						</Pane>
@@ -1342,34 +1342,36 @@
 						</div>
 					</Pane>
 
-					<PaneResizer class="resizer resizer-vertical" />
-
-					<!-- Right: Properties panel -->
-					<Pane defaultSize={15} minSize={5}>
-						<PropertiesPanel
-							{selectedNode}
-							{selectedEdge}
-							onBeforeFirstEdit={handleBeforeFirstEdit}
-							onmutate={handlePropertyMutation}
-							ontogglepin={handleTogglePin}
-							readonly={isC4Mode()}
-						/>
-					</Pane>
+					<!-- Right: Properties panel (hidden in View mode) -->
+					{#if viewMode.mode === 'edit'}
+						<PaneResizer class="resizer resizer-vertical" />
+						<Pane defaultSize={15} minSize={5}>
+							<PropertiesPanel
+								{selectedNode}
+								{selectedEdge}
+								onBeforeFirstEdit={handleBeforeFirstEdit}
+								onmutate={handlePropertyMutation}
+								ontogglepin={handleTogglePin}
+								readonly={isC4Mode()}
+							/>
+						</Pane>
+					{/if}
 				</PaneGroup>
 			</Pane>
 
-			<PaneResizer class="resizer resizer-horizontal" />
-
-			<!-- Middle: Code editor panel (full width) -->
-			<Pane defaultSize={25} minSize={10}>
-				<CodePanel
-					value={calmJson}
-					onchange={handleCodeChange}
-					parseError={codeParseError}
-					selectedNodeId={selectedNodeId}
-					selectedEdgeId={selectedEdgeId}
-				/>
-			</Pane>
+			<!-- Bottom: Code editor panel (hidden in View mode) -->
+			{#if viewMode.mode === 'edit'}
+				<PaneResizer class="resizer resizer-horizontal" />
+				<Pane defaultSize={25} minSize={10}>
+					<CodePanel
+						value={calmJson}
+						onchange={handleCodeChange}
+						parseError={codeParseError}
+						selectedNodeId={selectedNodeId}
+						selectedEdgeId={selectedEdgeId}
+					/>
+				</Pane>
+			{/if}
 
 			{#if isPanelOpen()}
 				<PaneResizer class="resizer resizer-horizontal" />
