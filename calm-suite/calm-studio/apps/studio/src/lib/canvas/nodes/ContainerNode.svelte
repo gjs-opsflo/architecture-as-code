@@ -12,6 +12,7 @@
 	const warnCount = $derived((data as Record<string, unknown>).validationWarnings as number ?? 0);
 	const badges = $derived(((data as Record<string, unknown>).badges as Badge[]) ?? []);
 	const severity = $derived(((data as Record<string, unknown>).severity as Severity) ?? 'unknown');
+	const tintBorder = $derived(((data as Record<string, unknown>).tintBorder as boolean) ?? false);
 
 	function toggleCollapse() {
 		collapsed = !collapsed;
@@ -39,7 +40,7 @@
 	{/each}
 {/if}
 
-<NodeFrame {badges} {severity}>
+<NodeFrame {badges} {severity} {tintBorder}>
 	{#if collapsed}
 		<div class="container collapsed" class:selected>
 			<ValidationBadge {errorCount} {warnCount} nodeId={(data as Record<string, unknown>).calmId as string ?? id} />

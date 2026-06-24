@@ -5,31 +5,60 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { Badge, Severity } from '@calmstudio/calm-core';
-	import BadgeCluster from '$lib/viz/badges/BadgeCluster.svelte';
 
+	/**
+	 * Visual frame wrapping a node's existing body. Two affordances:
+	 *  - A small unobtrusive badge in the top-right (controls count by default).
+	 *    Matches CalmHub's `O n` style — single chip, not a cluster.
+	 *  - An optional gradient severity-tint border, opt-in via `tintBorder`.
+	 *    Off by default so the baseline canvas stays clean. Threat-overlay mode
+	 *    flips this on by passing `tintBorder` true from the page.
+	 */
 	let {
 		badges = [],
 		severity = 'unknown',
+		tintBorder = false,
 		children
-	}: { badges?: Badge[]; severity?: Severity; children: Snippet } = $props();
+	}: { badges?: Badge[]; severity?: Severity; tintBorder?: boolean; children: Snippet } = $props();
 
 	const borderColor = $derived(
-		(
-			{
-				low: 'rgba(6, 182, 212, 0.55)',
-				medium: 'rgba(245, 158, 11, 0.6)',
-				high: 'rgba(249, 115, 22, 0.65)',
-				critical: 'rgba(244, 63, 94, 0.75)',
-				unknown: 'transparent'
-			} as const
-		)[severity]
+		!tintBorder
+			? 'transparent'
+			: (
+					{
+						low: 'rgba(6, 182, 212, 0.55)',
+						medium: 'rgba(245, 158, 11, 0.6)',
+						high: 'rgba(249, 115, 22, 0.65)',
+						critical: 'rgba(244, 63, 94, 0.75)',
+						unknown: 'transparent'
+					} as const
+				)[severity]
+	);
+
+	/**
+	 * Pick the single most informative badge to show (CalmHub-style minimal).
+	 * Priority order: controls count > first decorator. Others are surfaced via
+	 * hover/popover, not crammed onto the card.
+	 */
+	const primaryBadge = $derived<Badge | null>(
+		badges.find((b) => b.source === 'controls') ?? badges[0] ?? null
 	);
 </script>
 
 <div class="node-frame" style:--sev-border={borderColor} data-severity={severity}>
 	{@render children()}
-	{#if badges.length > 0}
-		<div class="badges-slot"><BadgeCluster {badges} /></div>
+	{#if primaryBadge}
+		<span
+			class="primary-badge"
+			class:has-data={true}
+			title={primaryBadge.label ?? primaryBadge.id}
+			data-source={primaryBadge.source}
+		>
+			<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<circle cx="12" cy="12" r="9" />
+			</svg>
+			<span class="badge-text">{primaryBadge.data?.count ?? badges.length}</span>
+		</span>
 	{/if}
 </div>
 
@@ -52,10 +81,22 @@
 		mask-composite: exclude;
 		pointer-events: none;
 	}
-	.badges-slot {
+	.primary-badge {
 		position: absolute;
 		top: 4px;
-		right: 4px;
+		right: 6px;
 		z-index: 2;
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		padding: 2px 5px;
+		border-radius: 8px;
+		font: 500 9px/1 'Geist Mono', ui-monospace, monospace;
+		color: var(--node-badge-fg, rgb(99 102 241));
+		background: var(--node-badge-bg, rgba(238, 242, 255, 0.9));
+		border: 1px solid var(--node-badge-border, rgba(99, 102, 241, 0.18));
+	}
+	.primary-badge .badge-text {
+		font-weight: 500;
 	}
 </style>

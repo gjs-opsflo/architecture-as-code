@@ -31,17 +31,19 @@ export function decorateFlowNodes(
 	severity: SeverityIndex,
 	overlayMode: OverlayModeForDecoration = 'default'
 ): Node[] {
+	const tintBorder = overlayMode === 'threat';
 	return nodes.map((node) => {
 		const calmId =
 			((node.data as Record<string, unknown> | undefined)?.calmId as string | undefined) ?? node.id;
 		const badges = badgeAPI.forNode(calmId);
-		const sev = overlayMode === 'threat' ? severity.forNode(calmId) : 'unknown';
+		const sev = tintBorder ? severity.forNode(calmId) : 'unknown';
 		return {
 			...node,
 			data: {
 				...node.data,
 				badges,
-				severity: sev
+				severity: sev,
+				tintBorder
 			}
 		};
 	});
