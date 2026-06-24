@@ -97,13 +97,14 @@
 		onselectionchange={handleSelectionChange}
 	>
 		<Background variant={BackgroundVariant.Dots} gap={22} size={0.8} />
-		<MiniMap
-			pannable
-			zoomable
-			maskColor="rgba(250, 250, 249, 0.6)"
-			position="bottom-right"
-			style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px); border: 1px solid var(--color-border-subtle); border-radius: 8px;"
-		/>
+		<MiniMap pannable zoomable position="bottom-right" />
+		<!--
+			MiniMap colours come from CSS — the `.clean-canvas` rules below pick up
+			--color-surface / --color-border / --color-canvas-bg in light AND dark
+			mode. Avoid inline style attrs so the dark token cascade actually wins
+			(inline styles otherwise lock the minimap to a white background on a
+			dark canvas).
+		-->
 	</SvelteFlow>
 </div>
 
@@ -118,6 +119,28 @@
 		display: none;
 	}
 	.clean-canvas :global(.svelte-flow__minimap) {
+		background: var(--color-surface, #ffffff);
+		border: 1px solid var(--color-border-subtle, #e7e5e0);
+		border-radius: 8px;
 		box-shadow: 0 1px 2px rgb(10 10 9 / 0.04);
+	}
+	:global(.dark) .clean-canvas :global(.svelte-flow__minimap) {
+		background: var(--color-surface-secondary, #131312);
+		border-color: var(--color-border, #3f3f46);
+	}
+	/* Minimap mask (the dimming overlay around the viewport rectangle) needs
+	   a theme-aware fill — Svelte Flow's default mask defaults to a near-white
+	   rgba which leaves a bright square on a dark canvas. */
+	.clean-canvas :global(.svelte-flow__minimap-mask) {
+		fill: rgba(250, 250, 249, 0.55);
+	}
+	:global(.dark) .clean-canvas :global(.svelte-flow__minimap-mask) {
+		fill: rgba(10, 10, 9, 0.55);
+	}
+	.clean-canvas :global(.svelte-flow__minimap-node) {
+		fill: var(--color-border, #d4d4cf);
+	}
+	:global(.dark) .clean-canvas :global(.svelte-flow__minimap-node) {
+		fill: var(--color-border, #3f3f46);
 	}
 </style>
