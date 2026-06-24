@@ -132,13 +132,15 @@
 			const target = pendingNavigateNodeId;
 			pendingNavigateNodeId = null;
 			// Two-frame delay so Svelte Flow finishes its initial layout pass +
-			// node measurement before we ask it to center on a node. Without this,
-			// navigateToNode runs against pre-measured nodes (measured? undefined)
-			// and Svelte Flow's setCenter computes an off-screen position.
+			// node measurement before we ask it to center on a node. After the
+			// canvas mounts, Svelte Flow fires an empty onselectionchange that
+			// wipes selectedNodeId — we re-apply it here so PropertiesPanel
+			// stays populated (and selected node visibly stays selected).
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
 					try {
 						canvas?.navigateToNode(target);
+						selectedNodeId = target;
 					} catch {
 						/* canvas not fully wired — silent */
 					}
