@@ -280,19 +280,19 @@ export async function layoutCalm(
 				elkNode.layoutOptions = {
 					'elk.algorithm': 'layered',
 					'elk.direction': edgeDirection,
-					'elk.padding': '[top=48,left=32,bottom=32,right=32]',
-					'elk.spacing.nodeNode': '50',
-					'elk.layered.spacing.nodeNodeBetweenLayers': '60',
-					'elk.spacing.edgeNode': '30',
-					'elk.spacing.edgeEdge': '20',
-					'elk.layered.spacing.edgeNodeBetweenLayers': '30',
+					'elk.padding': '[top=56,left=40,bottom=40,right=40]',
+					'elk.spacing.nodeNode': '80',
+					'elk.layered.spacing.nodeNodeBetweenLayers': '90',
+					'elk.spacing.edgeNode': '40',
+					'elk.spacing.edgeEdge': '25',
+					'elk.layered.spacing.edgeNodeBetweenLayers': '40',
 					'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
 				};
 			} else {
 				elkNode.layoutOptions = {
 					'elk.algorithm': 'rectpacking',
-					'elk.padding': '[top=48,left=32,bottom=32,right=32]',
-					'elk.spacing.nodeNode': '50',
+					'elk.padding': '[top=56,left=40,bottom=40,right=40]',
+					'elk.spacing.nodeNode': '70',
 					'elk.aspectRatio': direction === 'DOWN' ? '99' : '0.01',
 				};
 			}
@@ -341,11 +341,11 @@ export async function layoutCalm(
 		layoutOptions: {
 			'elk.algorithm': 'layered',
 			'elk.direction': direction,
-			'elk.layered.spacing.nodeNodeBetweenLayers': '120',
-			'elk.spacing.nodeNode': '100',
-			'elk.spacing.edgeNode': '40',
-			'elk.spacing.edgeEdge': '25',
-			'elk.layered.spacing.edgeNodeBetweenLayers': '40',
+			'elk.layered.spacing.nodeNodeBetweenLayers': '160',
+			'elk.spacing.nodeNode': '140',
+			'elk.spacing.edgeNode': '50',
+			'elk.spacing.edgeEdge': '30',
+			'elk.layered.spacing.edgeNodeBetweenLayers': '50',
 			'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
 		},
 		children: topLevelNodes,
