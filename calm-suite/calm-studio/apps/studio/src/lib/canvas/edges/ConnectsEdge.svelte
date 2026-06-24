@@ -39,7 +39,11 @@
 				? 'stroke: #d97706; stroke-width: 2;'
 				: undefined
 	);
-	const finalStyle = $derived(validationStyle ? `${style ?? ''} ${validationStyle}` : style);
+	// Editorial-Technical edge style: dashed light gray (matches CalmHub).
+	const baseStyle = 'stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 4 3;';
+	const finalStyle = $derived(
+		validationStyle ? `${baseStyle} ${style ?? ''} ${validationStyle}` : `${baseStyle} ${style ?? ''}`
+	);
 
 	const flowTransition = $derived((data as Record<string, unknown>)?.flowTransition as CalmTransition | null | undefined);
 	const dimmed = $derived((data as Record<string, unknown>)?.dimmed === true);
