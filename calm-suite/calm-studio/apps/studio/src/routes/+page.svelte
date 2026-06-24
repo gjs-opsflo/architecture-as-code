@@ -112,6 +112,23 @@
 	// ─── viz: mode + overlay state + threat extraction ───────────────────────
 	const viewMode = createModeStore('edit');
 	const overlay = createOverlayStore();
+
+	/**
+	 * Code panel collapsed by default — was eating 30% of vertical screen on every
+	 * load. Toggle via Cmd+' shortcut (handler wired below). Persists per-session.
+	 */
+	let showCodePanel = $state(false);
+
+	$effect(() => {
+		const onKey = (e: KeyboardEvent): void => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "'") {
+				e.preventDefault();
+				showCodePanel = !showCodePanel;
+			}
+		};
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	});
 	let threatBadges = $state<Badge[]>([]);
 
 	/**
@@ -1366,8 +1383,8 @@
 				</PaneGroup>
 			</Pane>
 
-			<!-- Bottom: Code editor panel (hidden in View mode) -->
-			{#if viewMode.mode === 'edit'}
+			<!-- Bottom: Code editor panel (Edit mode only, collapsed by default) -->
+			{#if viewMode.mode === 'edit' && showCodePanel}
 				<PaneResizer class="resizer resizer-horizontal" />
 				<Pane defaultSize={25} minSize={10}>
 					<CodePanel
