@@ -102,6 +102,18 @@
 
 	let canvas: CalmCanvas;
 
+	// ─── Code panel visibility ────────────────────────────────────────────────
+
+	const CODE_PANEL_KEY = 'calmstudio:codePanelVisible';
+	let codePanelVisible = $state(
+		typeof globalThis.localStorage !== 'undefined'
+			? globalThis.localStorage.getItem(CODE_PANEL_KEY) !== 'false'
+			: true,
+	);
+	$effect(() => {
+		globalThis.localStorage?.setItem(CODE_PANEL_KEY, String(codePanelVisible));
+	});
+
 	// ─── Desktop: native title bar sync ───────────────────────────────────────
 
 	// Reactively update the native OS window title when filename or dirty state changes.
@@ -786,11 +798,11 @@
 					edges = snapshot.edges;
 				}
 			},
-			zoomIn: () => { /* TODO: wire to canvas zoom via useSvelteFlow */ },
-			zoomOut: () => { /* TODO: wire to canvas zoom via useSvelteFlow */ },
+			zoomIn: () => { canvas?.zoomIn(); },
+			zoomOut: () => { canvas?.zoomOut(); },
 			zoomFit: () => { canvas?.fitViewport(); },
 			togglePalette: () => { /* TODO: expose palette visibility state */ },
-			toggleCode: () => { /* TODO: expose code panel visibility state */ },
+			toggleCode: () => { codePanelVisible = !codePanelVisible; },
 			toggleProperties: () => { /* TODO: expose properties panel visibility state */ },
 			about: () => {
 				alert('CalmStudio v0.1.0\nVisual CALM Architecture Editor\nhttps://calmstudio.dev');
@@ -1032,6 +1044,9 @@
 			} else if (e.key === 's' && e.shiftKey) {
 				e.preventDefault();
 				handleSaveAs();
+			} else if (e.key === "'") {
+				e.preventDefault();
+				codePanelVisible = !codePanelVisible;
 			}
 		}
 
@@ -1283,18 +1298,20 @@
 				</PaneGroup>
 			</Pane>
 
-			<PaneResizer class="resizer resizer-horizontal" />
+			{#if codePanelVisible}
+				<PaneResizer class="resizer resizer-horizontal" />
 
-			<!-- Middle: Code editor panel (full width) -->
-			<Pane defaultSize={25} minSize={10}>
-				<CodePanel
-					value={calmJson}
-					onchange={handleCodeChange}
-					parseError={codeParseError}
-					selectedNodeId={selectedNodeId}
-					selectedEdgeId={selectedEdgeId}
-				/>
-			</Pane>
+				<!-- Middle: Code editor panel (full width) -->
+				<Pane defaultSize={25} minSize={10}>
+					<CodePanel
+						value={calmJson}
+						onchange={handleCodeChange}
+						parseError={codeParseError}
+						selectedNodeId={selectedNodeId}
+						selectedEdgeId={selectedEdgeId}
+					/>
+				</Pane>
+			{/if}
 
 			{#if isPanelOpen()}
 				<PaneResizer class="resizer resizer-horizontal" />

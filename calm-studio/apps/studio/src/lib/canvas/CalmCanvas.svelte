@@ -142,13 +142,21 @@
 
 	// ─── Svelte Flow context ─────────────────────────────────────────────────
 
-	const { screenToFlowPosition, fitView, setCenter, getViewport, setViewport } = useSvelteFlow();
+	const { screenToFlowPosition, fitView, setCenter, getViewport, setViewport, zoomIn: flowZoomIn, zoomOut: flowZoomOut } = useSvelteFlow();
 
 	/**
 	 * Fit all nodes into view. Called by parent after import or layout.
 	 */
 	export function fitViewport() {
 		fitView({ duration: 300, maxZoom: 1.2, padding: 0.2 });
+	}
+
+	export function zoomIn() {
+		flowZoomIn({ duration: 200 });
+	}
+
+	export function zoomOut() {
+		flowZoomOut({ duration: 200 });
 	}
 
 	/**
