@@ -20,7 +20,10 @@ function isRemoteUrl(value: string | undefined): value is string {
  * in for zoom/pan/tooltips/flow animation, unless interactive={false}.
  */
 export function CalmDiagram(props: CalmDiagramProps): React.ReactElement | null {
-  const { src, data, theme, flow, containers, interactive = true, __bundle } = props;
+  const { src, data, theme, flow, flowView, containers, interactive = true, __bundle } = props;
+  // Flows render as sequence diagrams by default — direction is visible in
+  // the geometry. The animated topology overlay is an explicit opt-in.
+  const sequenceMode = Boolean(flow) && flowView !== 'overlay';
   const [upgraded, setUpgraded] = useState(false);
   const [domTheme, setDomTheme] = useState<'light' | 'dark'>('light');
 
@@ -70,7 +73,11 @@ export function CalmDiagram(props: CalmDiagramProps): React.ReactElement | null 
     return null;
   }
 
-  if (upgraded) {
+  // Sequence mode with a build-time render available: the static SVG IS the
+  // final artifact (direction lives in the geometry) — no upgrade needed.
+  const sequenceSvgs = sequenceMode && flow !== undefined ? __bundle?.flowSvgs?.[flow] : undefined;
+
+  if (upgraded && sequenceSvgs === undefined) {
     const effectiveTheme = theme ?? domTheme;
     const height = __bundle ? __bundle.size.height : 480;
     return (
@@ -80,18 +87,20 @@ export function CalmDiagram(props: CalmDiagramProps): React.ReactElement | null 
           src={remote ? src : undefined}
           theme={effectiveTheme}
           flow={flow || undefined}
+          flow-view={sequenceMode ? undefined : flow ? 'overlay' : undefined}
           containers={containers === 'edges' ? 'edges' : undefined}
         />
       </div>
     );
   }
 
-  if (__bundle) {
+  const staticSvgs = sequenceSvgs ?? __bundle?.svg;
+  if (staticSvgs !== undefined) {
     if (theme) {
       return (
         <div
           className="calm-diagram"
-          dangerouslySetInnerHTML={{ __html: __bundle.svg[theme] }}
+          dangerouslySetInnerHTML={{ __html: staticSvgs[theme] }}
         />
       );
     }
@@ -99,11 +108,11 @@ export function CalmDiagram(props: CalmDiagramProps): React.ReactElement | null 
       <div className="calm-diagram">
         <div
           className="calm-diagram-static-light"
-          dangerouslySetInnerHTML={{ __html: __bundle.svg.light }}
+          dangerouslySetInnerHTML={{ __html: staticSvgs.light }}
         />
         <div
           className="calm-diagram-static-dark"
-          dangerouslySetInnerHTML={{ __html: __bundle.svg.dark }}
+          dangerouslySetInnerHTML={{ __html: staticSvgs.dark }}
         />
       </div>
     );

@@ -31,6 +31,27 @@ describe('CalmDiagram SSR', () => {
     expect(html).not.toContain('LIGHT');
   });
 
+  it('renders the flow sequence SVG statically when flow is set and prerendered', () => {
+    const flowBundle = {
+      ...bundle,
+      flowSvgs: {
+        'checkout-flow': {
+          light: '<svg xmlns="http://www.w3.org/2000/svg"><text>SEQ-LIGHT</text></svg>',
+          dark: '<svg xmlns="http://www.w3.org/2000/svg"><text>SEQ-DARK</text></svg>',
+        },
+      },
+    };
+    const html = renderToString(<CalmDiagram __bundle={flowBundle} flow="checkout-flow" />);
+    expect(html).toContain('SEQ-LIGHT');
+    expect(html).toContain('SEQ-DARK');
+    expect(html).not.toContain('>LIGHT<'); // topology svg not used
+  });
+
+  it('falls back to the topology overlay path when flowView="overlay"', () => {
+    const html = renderToString(<CalmDiagram __bundle={bundle} flow="x" flowView="overlay" />);
+    expect(html).toContain('LIGHT'); // topology static svg
+  });
+
   it('renders a placeholder for remote src (no bundle)', () => {
     const html = renderToString(<CalmDiagram src="https://example.com/a.calm.json" />);
     expect(html).toContain('calm-diagram-placeholder');

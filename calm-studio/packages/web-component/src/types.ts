@@ -7,5 +7,7 @@ export interface CalmDiagramProps {
   data?: string;
   theme?: 'light' | 'dark';
   flow?: string;
+  /** How a flow renders: 'sequence' (default) or the legacy 'overlay' animation. */
+  flowView?: 'sequence' | 'overlay';
   containers?: 'nested' | 'edges';
 }

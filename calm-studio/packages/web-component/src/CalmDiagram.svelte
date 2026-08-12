@@ -7,6 +7,7 @@
       data: { type: 'String', attribute: 'data' },
       theme: { type: 'String', attribute: 'theme', reflect: true },
       flow: { type: 'String', attribute: 'flow' },
+      flowView: { type: 'String', attribute: 'flow-view' },
       containers: { type: 'String', attribute: 'containers' },
     },
   }}
@@ -14,6 +15,7 @@
 
 <script lang="ts">
   import { renderELKDiagram } from './render/elkRender.js';
+  import { renderFlowSequence } from './render/flowSequence.js';
   import type { CalmArchitecture } from '@calmstudio/calm-core';
 
   let {
@@ -21,8 +23,9 @@
     data = '',
     theme = 'light' as 'light' | 'dark',
     flow = '',
+    flowView = 'sequence' as 'sequence' | 'overlay',
     containers = 'nested' as 'nested' | 'edges',
-  }: { src?: string; data?: string; theme?: 'light' | 'dark'; flow?: string; containers?: 'nested' | 'edges' } = $props();
+  }: { src?: string; data?: string; theme?: 'light' | 'dark'; flow?: string; flowView?: 'sequence' | 'overlay'; containers?: 'nested' | 'edges' } = $props();
 
   let svgContent = $state('');
   let error = $state('');
@@ -46,6 +49,7 @@
     const currentData = data;
     const currentTheme = theme;
     const currentFlow = flow;
+    const currentFlowView = flowView;
     const currentContainers = containers;
 
     void (async () => {
@@ -69,7 +73,13 @@
           return;
         }
 
-        svgContent = await renderELKDiagram(arch, { theme: currentTheme, flow: currentFlow || undefined, containers: currentContainers });
+        // Flows default to a sequence diagram — direction is visible in the
+        // geometry. The animated topology overlay stays as an explicit opt-in.
+        if (currentFlow && currentFlowView !== 'overlay') {
+          svgContent = renderFlowSequence(arch, currentFlow, { theme: currentTheme });
+        } else {
+          svgContent = await renderELKDiagram(arch, { theme: currentTheme, flow: currentFlow || undefined, containers: currentContainers });
+        }
       } catch (err) {
         error = err instanceof Error ? err.message : String(err);
       } finally {

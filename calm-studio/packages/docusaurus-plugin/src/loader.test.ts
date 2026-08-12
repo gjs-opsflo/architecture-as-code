@@ -16,7 +16,8 @@ describe('buildCalmModule', () => {
     expect(code).toContain('export const architecture =');
     expect(code).toContain('export const svg =');
     expect(code).toContain('export const size =');
-    expect(code).toContain('export default { architecture, svg, size };');
+    expect(code).toContain('export const flowSvgs =');
+    expect(code).toContain('export default { architecture, svg, size, flowSvgs };');
     expect(code).toContain('Web Client'); // node name baked into the SVG
   });
 

@@ -9,4 +9,5 @@ import { initAllPacks } from '@calmstudio/extensions';
 initAllPacks();
 
 export { renderELKDiagram } from './elkRender.js';
+export { renderFlowSequence } from './flowSequence.js';
 export type { RenderOptions } from './elkRender.js';

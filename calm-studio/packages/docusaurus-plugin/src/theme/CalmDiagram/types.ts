@@ -8,6 +8,8 @@ export interface CalmDiagramBundle {
   architecture: unknown;
   svg: { light: string; dark: string };
   size: { width: number; height: number };
+  /** Per-flow sequence-diagram SVGs, keyed by flow unique-id. */
+  flowSvgs?: Record<string, { light: string; dark: string }>;
 }
 
 export interface CalmDiagramProps {
@@ -17,8 +19,10 @@ export interface CalmDiagramProps {
   data?: object;
   /** Force a theme; defaults to following the site's html[data-theme]. */
   theme?: 'light' | 'dark';
-  /** Flow unique-id to highlight (applied after hydration). */
+  /** Flow unique-id to render. Defaults to a sequence diagram. */
   flow?: string;
+  /** How a flow renders: 'sequence' (default) or the legacy animated topology 'overlay'. */
+  flowView?: 'sequence' | 'overlay';
   /** Containment rendering: nested boxes (default) or legacy dashed edges. Non-default values apply client-side. */
   containers?: 'nested' | 'edges';
   /** Set false to keep the static SVG and skip loading the interactive web component. */
@@ -35,6 +39,7 @@ declare module 'react' {
         data?: string;
         theme?: string;
         flow?: string;
+        'flow-view'?: string;
         containers?: string;
       };
     }

@@ -9,6 +9,11 @@ declare module '@calmstudio/diagram/render' {
     flow?: string;
   }
   export function renderELKDiagram(arch: unknown, options?: RenderOptions): Promise<string>;
+  export function renderFlowSequence(
+    arch: unknown,
+    flowId: string,
+    options?: { theme?: 'light' | 'dark' }
+  ): string;
 }
 
 declare module '@calmstudio/diagram' {

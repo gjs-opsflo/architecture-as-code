@@ -33,7 +33,8 @@ export async function buildCalmModule(source: string, resourcePath: string): Pro
     `export const architecture = ${JSON.stringify(architecture)};`,
     `export const svg = ${JSON.stringify(bundle.svg)};`,
     `export const size = ${JSON.stringify(bundle.size)};`,
-    `export default { architecture, svg, size };`,
+    `export const flowSvgs = ${JSON.stringify(bundle.flowSvgs)};`,
+    `export default { architecture, svg, size, flowSvgs };`,
   ].join('\n');
 }
 
